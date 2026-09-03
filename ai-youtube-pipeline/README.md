@@ -2,9 +2,9 @@
 
 A complete, production-quality automated pipeline for creating and publishing AI-generated YouTube videos.
 
-## Phase 1: Project Foundation ✅
+## Current Status: Phase 20 - Upload Lifecycle Integration ✅
 
-This is the initial foundation phase. The project structure, configuration system, and logging are now in place.
+The project now includes the content-to-video pipeline, scheduled automation, and restart-safe operational state tracking.
 
 ### Features Implemented
 
@@ -13,6 +13,12 @@ This is the initial foundation phase. The project structure, configuration syste
 - **Logging System**: Structured logging with console and optional file output
 - **File Management**: Utilities for managing generated assets
 - **Error Handling**: Comprehensive exception handling and logging
+- **Restart Safety**: Existing media outputs are reused and video composition receives cached stage outputs
+- **Failure Diagnostics**: Failed jobs persist their stage and error in `job_state.json`
+- **Operational CLI**: Run health checks or one scheduler pass from the command line
+- **Job Monitoring**: Inspect aggregate status or one persisted job without mutation
+- **YouTube Uploads**: Opt-in OAuth authentication and resumable video uploads
+- **Upload Lifecycle**: Successful uploads persist video IDs and URLs in job state
 
 ### Project Structure
 
@@ -95,7 +101,7 @@ python -m app.main
 Expected output:
 ```
 ============================================================
-AI YouTube Pipeline - Foundation Phase
+AI YouTube Pipeline - Production Automation
 ============================================================
 Environment: development
 Log Level: INFO
@@ -103,7 +109,7 @@ Dry Run: true
 Data Directory: data
 Data directory ready: data
 ============================================================
-Foundation phase initialized successfully!
+Production automation foundation initialized successfully!
 ============================================================
 ```
 
@@ -129,7 +135,14 @@ VOICE_PROVIDER=
 YOUTUBE_CLIENT_ID=               # Phase 6
 YOUTUBE_CLIENT_SECRET=
 YOUTUBE_REDIRECT_URI=http://localhost:8080/oauth2callback
+YOUTUBE_TOKEN_FILE=data/youtube_token.json
+YOUTUBE_CATEGORY_ID=22
+YOUTUBE_PRIVACY_STATUS=private
 ```
+
+For personal use, keep `DRY_RUN=true` during testing. Set `DRY_RUN=false` only when
+OAuth is configured and an actual upload is intentional; the default privacy status
+is `private`.
 
 ## Testing
 
@@ -139,17 +152,26 @@ Run the application to verify everything is working:
 python -m app.main
 ```
 
-## Next Steps
+Run scheduled jobs once, optionally adding an immediate topic:
 
-Phase 1 is complete. When ready, proceed to **Phase 2: Claude Content Generation**.
+```bash
+python -m app.main --run-once
+python -m app.main --run-once --topic "5 AI tools developers should know"
+python -m app.main --status
+python -m app.main --status job_20260902_001
+```
 
-This will implement:
-- Claude API integration
-- Content generation for a given topic
-- Structured JSON output (title, script, scenes, YouTube metadata)
-- Response validation
+## Phase History
 
-Confirm when you want to proceed to Phase 2.
+- ✅ Phases 1-7: Foundation, content, images, audio, video, YouTube abstraction, and orchestration
+- ✅ Phases 8-15: Scheduling, topic selection, job execution, full automation, and automation runner
+- ✅ Phase 16: Production hardening for cached outputs and persisted failure diagnostics
+- ✅ Phase 17: Operational CLI for health checks and one-shot runs
+- ✅ Phase 18: Read-only persisted job monitoring and status inspection
+- ✅ Phase 19: OAuth-backed, resumable YouTube uploads with dry-run protection
+- ✅ Phase 20: Upload results integrated into automation status and job history
+
+The next increment should add durable scheduling or notifications around completed and failed jobs.
 
 ## Development Rules
 
@@ -183,4 +205,4 @@ With support for:
 
 ---
 
-Created: 2026-08-30 | Phase: Foundation (1/7)
+Created: 2026-08-30 | Current phase: Upload lifecycle integration (20)
