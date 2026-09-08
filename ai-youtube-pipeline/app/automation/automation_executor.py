@@ -41,13 +41,32 @@ class AutomationExecutor:
 
         job_id = scheduled_job["job_id"]
         topic = scheduled_job["topic"]
+        video_format = scheduled_job.get("format", "LONG_FORM")
+        publish_at = scheduled_job.get("publish_at")
 
-        pipeline_job = self.orchestrator.create_job(topic=topic, job_id=job_id)
+        try:
+            existing_job = self.orchestrator.load_job(job_id)
+        except FileNotFoundError:
+            existing_job = None
+
+        if existing_job is not None:
+            return {
+                "job_id": existing_job.job_id,
+                "topic": existing_job.topic,
+                "format": existing_job.format.value,
+                "status": existing_job.status.value,
+                "created_at": existing_job.created_at,
+            }
+
+        pipeline_job = self.orchestrator.create_job(
+            topic=topic, job_id=job_id, format=video_format, publish_at=publish_at
+        )
         self.history_manager.history.record(
             job_id=job_id,
             topic=topic,
             status="CREATED",
             attempts=0,
+            video_format=video_format,
         )
 
         logger.info(f"Executor created job {job_id} for topic: {topic}")
@@ -55,6 +74,7 @@ class AutomationExecutor:
         return {
             "job_id": pipeline_job.job_id,
             "topic": pipeline_job.topic,
+            "format": pipeline_job.format.value,
             "status": pipeline_job.status.value,
             "created_at": pipeline_job.created_at,
         }

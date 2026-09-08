@@ -7,6 +7,7 @@ from app.automation.automation_runner import AutomationRunner
 from app.automation.full_automation import FullAutomation
 from app.automation.job_history import JobHistory
 from app.automation.job_runner import JobRunner
+from app.automation.notifier import ConsoleNotifier, DurableNotifier, Notifier
 from app.automation.scheduler import AutomationScheduler, ScheduledJob
 from app.automation.topic_queue import TopicQueue
 from app.automation.topic_selector import TopicSelector
@@ -23,4 +24,7 @@ __all__ = [
     "AutomationPipeline",
     "FullAutomation",
     "AutomationRunner",
+    "ConsoleNotifier",
+    "DurableNotifier",
+    "Notifier",
 ]
