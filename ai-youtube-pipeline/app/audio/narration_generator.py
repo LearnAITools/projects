@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import List
 
-from app.audio.voice_provider import LocalPlaceholderVoiceProvider, VoiceProvider
+from app.audio.voice_provider import HttpVoiceProvider, LocalPlaceholderVoiceProvider, VoiceProvider
 from app.content.models import GeneratedContent
 from app.utils.file_manager import FileManager
 from app.utils.logger import get_logger
@@ -22,9 +22,19 @@ class NarrationGenerator:
         base_dir: str | None = None,
         file_manager: FileManager | None = None,
     ) -> None:
-        self.provider = provider or LocalPlaceholderVoiceProvider()
         self.file_manager = file_manager or FileManager()
         self.base_dir = Path(base_dir) if base_dir else Path(self.file_manager.settings.data_dir)
+        if provider is not None:
+            self.provider = provider
+        elif self.file_manager.settings.voice_provider == "http":
+            self.provider = HttpVoiceProvider(
+                endpoint=self.file_manager.settings.voice_api_url or "",
+                api_key=self.file_manager.settings.voice_api_key or "",
+                timeout_seconds=self.file_manager.settings.voice_timeout_seconds,
+                max_retries=self.file_manager.settings.voice_max_retries,
+            )
+        else:
+            self.provider = LocalPlaceholderVoiceProvider()
 
     def _job_dir(self, job_id: str) -> Path:
         return self.file_manager.get_audio_dir(job_id)
