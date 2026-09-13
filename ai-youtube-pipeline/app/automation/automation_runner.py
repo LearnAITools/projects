@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
+from datetime import datetime
 
 from app.automation.full_automation import FullAutomation
 from app.automation.job_runner import JobRunner
@@ -54,6 +55,13 @@ class AutomationRunner:
                 result = self.automation.run_job(scheduled_job)
                 if result:
                     results.append(result)
+                    retry_at = result.get("next_retry_at")
+                    if result.get("status") == "FAILED" and retry_at:
+                        self.job_runner.scheduler.reschedule_retry(
+                            result["job_id"], datetime.fromisoformat(retry_at)
+                        )
+                    elif result.get("status") == "FAILED":
+                        self.job_runner.scheduler.cancel(result["job_id"])
                     if result.get("status") == "COMPLETED":
                         self._stats["successful_jobs"] += 1
                     else:

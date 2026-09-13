@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional
 from app.automation.automation_executor import AutomationExecutor
 from app.automation.automation_manager import AutomationManager
 from app.content.content_generator import ContentGenerator, ContentValidationError
+from app.content.models import VideoFormat
 from app.pipeline.orchestrator import PipelineOrchestrator
 from app.utils.logger import get_logger
 
@@ -46,16 +47,33 @@ class AutomationPipeline:
 
         job_id = scheduled_job.get("job_id")
         topic = scheduled_job.get("topic")
+        video_format = VideoFormat(scheduled_job.get("format", VideoFormat.LONG_FORM.value))
 
         logger.info(f"Automation pipeline starting for job {job_id}: {topic}")
 
         try:
+            try:
+                existing_job = self.orchestrator.load_job(job_id)
+            except FileNotFoundError:
+                existing_job = None
+            if (
+                existing_job is not None
+                and existing_job.failed_stage != "content"
+                and self.orchestrator._state_path(job_id).parent.joinpath("content.json").exists()
+            ):
+                return {
+                    "job_id": job_id,
+                    "topic": topic,
+                    "format": video_format.value,
+                    "content_generated": True,
+                    "status": "CONTENT_GENERATED",
+                }
             pipeline_job = self.executor.execute(scheduled_job)
             if not pipeline_job:
                 logger.error(f"Executor failed to create job for {job_id}")
                 return None
 
-            content = self.generator.generate(topic)
+            content = self.generator.generate(topic, video_format=video_format)
             self.orchestrator.save_content(job_id, content)
             self.orchestrator.update_job_status(
                 job_id, self.orchestrator.load_job(job_id).status.__class__.CONTENT_GENERATED
@@ -66,6 +84,7 @@ class AutomationPipeline:
             return {
                 "job_id": job_id,
                 "topic": topic,
+                "format": video_format.value,
                 "content_generated": True,
                 "status": "CONTENT_GENERATED",
             }
@@ -80,6 +99,7 @@ class AutomationPipeline:
                 "topic": topic,
                 "content_generated": False,
                 "status": "FAILED",
+                "error": str(exc),
             }
         except Exception as exc:
             logger.error(f"Unexpected error in automation pipeline for {job_id}: {exc}")
@@ -88,4 +108,5 @@ class AutomationPipeline:
                 "topic": topic,
                 "content_generated": False,
                 "status": "FAILED",
+                "error": str(exc),
             }
