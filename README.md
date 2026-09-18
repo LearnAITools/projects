@@ -188,7 +188,7 @@ python -m app.main --status job_20260902_001
 
 ## Phase History
 
-- ✅ Phases 1-7: Foundation, content, images, audio, video, YouTube abstraction, and orchestration
+- ✅ Phases 1-7: Foundation, content, images, audio, video, YouTube abstraction, and orchestration.
 - ✅ Phases 8-15: Scheduling, topic selection, job execution, full automation, and automation runner
 - ✅ Phase 16: Production hardening for cached outputs and persisted failure diagnostics
 - ✅ Phase 17: Operational CLI for health checks and one-shot runs
