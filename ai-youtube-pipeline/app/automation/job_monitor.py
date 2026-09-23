@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from app.utils.logger import get_logger
+from app.automation.observability import Observability
 
 logger = get_logger(__name__)
 
@@ -56,3 +57,7 @@ class JobMonitor:
             "total": len(jobs),
             "by_status": dict(sorted(counts.items())),
         }
+
+    def alerts(self) -> List[Dict[str, Any]]:
+        """Return operational alerts for persisted job states."""
+        return Observability(self.data_dir).alerts(self.list_jobs())
