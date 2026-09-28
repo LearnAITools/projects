@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from app.automation.automation_manager import AutomationManager
@@ -27,24 +27,26 @@ class JobRunner:
         self, now: Optional[datetime] = None
     ) -> Optional[Dict[str, Any]]:
         """Execute the next due scheduled job if one exists, otherwise return None."""
-        reference = now or datetime.utcnow()
-        due_jobs = self.scheduler.get_due_jobs(now=reference)
-
-        if not due_jobs:
+        reference = now or datetime.now(timezone.utc)
+        claimed = self.scheduler.claim_due_job(now=reference)
+        if claimed is None:
             return None
 
-        job = due_jobs[0]
+        job, claim_token = claimed
 
         try:
             topic = self.queue.next_topic()
         except ValueError:
+            self.scheduler.release_claim(job.job_id, claim_token)
             return None
 
-        self.scheduler.mark_run(job.job_id)
+        self.scheduler.mark_run(job.job_id, claim_token=claim_token)
 
         return {
             "job_id": job.job_id,
             "topic": topic,
+            "format": job.format.value,
+            "publish_at": job.publish_at.isoformat() if job.publish_at else None,
             "status": "SCHEDULED",
             "timestamp": reference.isoformat(),
         }
