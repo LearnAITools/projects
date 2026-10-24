@@ -6,7 +6,11 @@ from pathlib import Path
 from typing import List
 
 from app.content.models import GeneratedContent
-from app.images.image_provider import ImageProvider, LocalPlaceholderImageProvider
+from app.images.image_provider import (
+    HttpImageProvider,
+    ImageProvider,
+    LocalPlaceholderImageProvider,
+)
 from app.utils.file_manager import FileManager
 from app.utils.logger import get_logger
 
@@ -22,9 +26,19 @@ class ImageGenerator:
         base_dir: str | None = None,
         file_manager: FileManager | None = None,
     ) -> None:
-        self.provider = provider or LocalPlaceholderImageProvider()
         self.file_manager = file_manager or FileManager()
         self.base_dir = Path(base_dir) if base_dir else Path(self.file_manager.settings.data_dir)
+        if provider is not None:
+            self.provider = provider
+        elif self.file_manager.settings.image_provider == "http":
+            self.provider = HttpImageProvider(
+                endpoint=self.file_manager.settings.image_api_url or "",
+                api_key=self.file_manager.settings.image_api_key or "",
+                timeout_seconds=self.file_manager.settings.image_timeout_seconds,
+                max_retries=self.file_manager.settings.image_max_retries,
+            )
+        else:
+            self.provider = LocalPlaceholderImageProvider()
 
     def _job_dir(self, job_id: str) -> Path:
         return self.file_manager.get_images_dir(job_id)

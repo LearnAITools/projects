@@ -2,6 +2,7 @@
 
 from app.content.claude_client import ClaudeClient
 from app.content.content_generator import ContentGenerator, ContentValidationError
+from app.content.models import VideoFormat
 from app.content.models import GeneratedContent, Scene, YouTubeMetadata
 
 __all__ = [
@@ -11,4 +12,5 @@ __all__ = [
     "GeneratedContent",
     "Scene",
     "YouTubeMetadata",
+    "VideoFormat",
 ]
